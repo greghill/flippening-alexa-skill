@@ -32,52 +32,42 @@ def build_response(session_attributes, speechlet_response):
     }
 
 
-# --------------- Functions that control the skill's behavior ------------------
+
+help_text = "ask me if the flippening has happened yet"
 
 
-def set_color_in_session(intent, session):
-    """ Sets the color in the session and prepares the speech to reply to the
-    user.
-    """
-
-    card_title = intent['name']
+def on_launch(launch_request):
+    card_title = "Welcome"
     session_attributes = {}
     should_end_session = False
 
-    speech_output = "Nope"
-    reprompt_text = "duh"
+    speech_output = help_text
+    reprompt_text = speech_output
     return build_response(session_attributes, build_speechlet_response(
         card_title, speech_output, reprompt_text, should_end_session))
 
 
-# --------------- Events ------------------
-
-
-def on_launch(launch_request, session):
-    """ Called when the user launches the skill without specifying what they
-    want
-    """
-
-    print("on_launch requestId=" + launch_request['requestId'] +
-          ", sessionId=" + session['sessionId'])
-    # Dispatch to your skill's launch
-    return get_welcome_response()
-
-
-def on_intent(intent_request, session):
-    """ Called when the user specifies an intent for this skill """
-
+def on_intent(intent_request):
+    '''
     print("on_intent requestId=" + intent_request['requestId'] +
           ", sessionId=" + session['sessionId'])
+    '''
 
     intent = intent_request['intent']
     intent_name = intent_request['intent']['name']
 
     # Dispatch to your skill's intent handlers
-    if intent_name == "FlippeningIntent":
-        return set_color_in_session(intent, session)
-    else:
+    if intent_name != "FlippeningIntent":
         raise ValueError("Invalid intent")
+
+    card_title = intent['name']
+    session_attributes = {}
+    should_end_session = True
+
+    speech_output = "Nope"
+    reprompt_text = help_text
+    return build_response(session_attributes, build_speechlet_response(
+        card_title, speech_output, reprompt_text, should_end_session))
 
 
 # --------------- Main handler ------------------
@@ -101,6 +91,7 @@ def lambda_handler(event, context):
          raise ValueError("Invalid Application ID")
     """
 
-    if event['request']['type'] == "IntentRequest":
-        return on_intent(event['request'], event['session'])
-
+    if event['request']['type'] == "LaunchRequest":
+        return on_launch(event['request'])
+    elif event['request']['type'] == "IntentRequest":
+        return on_intent(event['request'])
